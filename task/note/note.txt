@@ -1,0 +1,416 @@
+package main
+
+import (
+	"database/sql"
+	"errors"
+	"net/http"
+	"strings"
+
+	"fmt"
+
+	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
+)
+
+func main() {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	} else {
+		fmt.Print("connected...")
+	}
+	fmt.Println(db)
+
+	router := gin.Default()
+	router.GET("/", homepage)
+
+	router.POST("/seller/create", createseller)
+	router.GET("/sellers", getAllSeller)
+	router.GET("/seller/:id", getsellerId)
+	router.POST("/seller/createproduct", createproduct)
+	router.GET("/seller/product", sellerproduct)
+
+	router.POST("/buyer/create", createbuyer)
+	router.GET("/buyers", getAllBuyers)
+	router.GET("/buyers/:id", getbuyerId)
+	router.GET("/buyers/buyProduct", getbuyerId)
+
+	router.GET("/product/:id", getproductID)
+
+	router.Run()
+}
+
+type Seller struct {
+	Id      string `json:"id"`
+	Name    string `json:"name"`
+	Email   string `json:"email" validate:"required" sql:"email"`
+	Phoneno string `json:"phoneno"`
+}
+
+type Buyer struct {
+	Id      string `json:"id"`
+	Name    string `json:"name"`
+	Email   string `json:"email" `
+	Phoneno int64  `json:"phoneno"`
+}
+
+type Product struct {
+	Id         string  `json:"id"`
+	Name       string  `json:"name"`
+	Tax        float64 `json:"tax"`
+	Categories string  `json:"categories"`
+	Seller     string  `json:"seller"`
+	Price      float64 `json:"price"`
+}
+
+func homepage(c *gin.Context) {
+
+	c.IndentedJSON(http.StatusOK, "Welcome")
+
+}
+
+func createseller(c *gin.Context) {
+
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	name := c.PostForm("name")
+	email := c.PostForm("email")
+	phoneno := c.PostForm("phoneno")
+
+	fmt.Println(name)
+	if _, err := sellervalid(name, email, phoneno); err == nil {
+
+		rows, err := db.Query("INSERT INTO seller(name, email,phoneno) VALUES('" + name + "','" + email + "','" + phoneno + "')")
+		if rows != nil {
+			fmt.Println("error", err)
+		}
+		res := []Seller{}
+
+		for rows.Next() {
+			emp := Seller{}
+
+			err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno)
+			if err != nil {
+				fmt.Println("scan error", err)
+			}
+
+			res = append(res, emp)
+		}
+
+		c.IndentedJSON(http.StatusOK, res)
+
+	} else {
+		c.IndentedJSON(http.StatusNotFound, gin.H{
+
+			"Message": err.Error()})
+
+	}
+}
+
+func sellervalid(name, email, phoneno string) (*Seller, error) {
+
+	if !strings.Contains(email, "@") {
+
+		return nil, errors.New("email must have symbol @")
+	}
+
+	if selleremailavailable(email) {
+		return nil, errors.New("email not available")
+	}
+
+	u := Seller{Name: name, Email: email, Phoneno: phoneno}
+
+	return &u, nil
+}
+
+func selleremailavailable(email string) bool {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	stmt := "SELECT email FROM seller WHERE email = ('" + email + "')"
+	fmt.Println(stmt)
+	err = db.QueryRow(stmt).Scan(&email)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			fmt.Println("email error", err)
+		}
+		return false
+	}
+
+	return true
+}
+
+func getAllSeller(c *gin.Context) {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	rows, err := db.Query("SELECT * FROM seller")
+	if err != nil {
+		fmt.Println("error")
+	}
+	res := []Seller{}
+
+	for rows.Next() {
+		emp := Seller{}
+
+		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno)
+		if err != nil {
+			fmt.Println("scan error", err)
+		}
+
+		res = append(res, emp)
+	}
+	fmt.Println(res)
+	c.IndentedJSON(http.StatusOK, res)
+}
+
+func getsellerId(c *gin.Context) {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	id := c.Param("id")
+	fmt.Println(id)
+	res := []Seller{}
+	fmt.Println(res)
+	rows, err := db.Query("SELECT * FROM seller")
+	if err != nil {
+		fmt.Println("error")
+	}
+	for rows.Next() {
+		emp := Seller{}
+
+		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno)
+		if err != nil {
+			fmt.Println("scan error", err)
+		}
+
+		if id == emp.Id {
+			c.IndentedJSON(http.StatusOK, emp)
+			return
+		}
+	}
+
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "sellerid not found"})
+
+}
+
+func createbuyer(c *gin.Context) {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	name := c.PostForm("name")
+	email := c.PostForm("email")
+	phoneno := c.PostForm("phoneno")
+	if _, err := buyervalid(name, email, phoneno); err == nil {
+		rows, err := db.Query("INSERT INTO buyer (name, email,phoneno) VALUES ('" + name + "','" + email + "','" + phoneno + "')")
+		if rows != nil {
+			fmt.Println("error", err)
+		}
+		res := []Buyer{}
+
+		for rows.Next() {
+			emp := Buyer{}
+
+			err = rows.Scan(&emp.Id, &emp.Name, &emp.Phoneno)
+			if err != nil {
+				fmt.Println("scan error", err)
+			}
+			fmt.Println(emp.Name, emp.Phoneno, emp.Email)
+			res = append(res, emp)
+		}
+		fmt.Println(res)
+
+		c.IndentedJSON(http.StatusOK, res)
+	} else {
+		c.IndentedJSON(http.StatusNotFound, gin.H{
+
+			"Message": err.Error()})
+
+	}
+}
+
+func buyervalid(name, email, phoneno string) (*Seller, error) {
+	if !strings.Contains(email, "@") {
+
+		return nil, errors.New("email must have symbol @")
+	}
+
+	if buyeremailavailable(email) {
+		return nil, errors.New("email not available")
+	}
+
+	u := Seller{Name: name, Email: email, Phoneno: phoneno}
+
+	return &u, nil
+}
+
+func buyeremailavailable(email string) bool {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	stmt := "SELECT email FROM buyer WHERE email = ('" + email + "')"
+	fmt.Println(stmt)
+	err = db.QueryRow(stmt).Scan(&email)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			fmt.Println("email error", err)
+		}
+		return false
+	}
+
+	return true
+}
+
+func getAllBuyers(c *gin.Context) {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+
+	rows, err := db.Query("SELECT * FROM buyer")
+	if rows != nil {
+		fmt.Println("error", err)
+	}
+	res := []Buyer{}
+	for rows.Next() {
+		emp := Buyer{}
+
+		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno)
+		if err != nil {
+			fmt.Println("scan error", err)
+		}
+
+		res = append(res, emp)
+	}
+	fmt.Println(res)
+	c.IndentedJSON(http.StatusOK, res)
+
+}
+
+func getbuyerId(c *gin.Context) {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	id := c.Param("id")
+	fmt.Println(id)
+	res := []Buyer{}
+	fmt.Println(res)
+	rows, err := db.Query("SELECT * FROM buyer")
+	if err != nil {
+		fmt.Println("error")
+	}
+	for rows.Next() {
+		emp := Seller{}
+
+		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno)
+		if err != nil {
+			fmt.Println("scan error", err)
+		}
+		if id == emp.Id {
+			c.IndentedJSON(http.StatusOK, emp)
+			return
+		}
+	}
+
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Buyerid is not found"})
+
+}
+
+func sellerproduct(c *gin.Context) {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	emp := Product{}
+	res := []Product{}
+
+	fmt.Println(emp)
+
+	rows, err := db.Query("SELECT * FROM products ")
+	if rows != nil {
+		fmt.Println("error", err)
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&emp.Id, &emp.Name, &emp.Tax, &emp.Categories, &emp.Seller, &emp.Price)
+		if err != nil {
+			fmt.Println("scan error", err)
+		}
+
+		res = append(res, emp)
+	}
+	fmt.Println(res)
+	c.IndentedJSON(http.StatusOK, res)
+
+}
+
+func getproductID(c *gin.Context) {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+
+	id := c.Param("id")
+	fmt.Println(id)
+	res := []Product{}
+	fmt.Println(res)
+	rows, err := db.Query("SELECT * FROM products")
+	if err != nil {
+		fmt.Println("error")
+	}
+	for rows.Next() {
+		emp := Product{}
+
+		err = rows.Scan(&emp.Id, &emp.Name, &emp.Tax, &emp.Categories, &emp.Seller, &emp.Price)
+		if err != nil {
+			fmt.Println("scan error", err)
+		}
+		if id == emp.Id {
+			c.IndentedJSON(http.StatusOK, emp)
+			return
+		}
+	}
+
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Productid not found"})
+}
+
+func createproduct(c *gin.Context) {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	name := c.PostForm("name")
+	tax := c.PostForm("tax")
+	categories := c.PostForm("categories")
+	seller := c.PostForm("seller")
+	price := c.PostForm("price")
+
+	rows, err := db.Query("INSERT INTO products(name, tax,categories,seller,price) VALUES('" + name + "','" + tax + "','" + categories + "','" + seller + "','" + price + "')")
+	if rows != nil {
+		fmt.Println("error", err)
+	}
+	res := []Product{}
+
+	for rows.Next() {
+		emp := Product{}
+
+		err = rows.Scan(&emp.Id, &emp.Name, &emp.Tax, &emp.Categories, &emp.Seller, &emp.Price)
+		if err != nil {
+			fmt.Println("scan error", err)
+		}
+
+		res = append(res, emp)
+	}
+
+	fmt.Println(res)
+	c.IndentedJSON(http.StatusOK, res)
+
+}
