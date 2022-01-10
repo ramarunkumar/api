@@ -1,5 +1,8 @@
 package main
 
+	// rows, err := db.Query("SELECT email FROM seller WHERE email='" + email + "'")
+
+
 import (
 	"database/sql"
 	"errors"

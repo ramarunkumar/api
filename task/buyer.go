@@ -18,6 +18,7 @@ func createbuyer(c *gin.Context) {
 	name := c.PostForm("name")
 	email := c.PostForm("email")
 	phoneno := c.PostForm("phoneno")
+	role := "2"
 	if _, err := buyervalid(name, email, phoneno); err == nil {
 		rows, err := db.Query("INSERT INTO buyer (name, email,phoneno) VALUES ('" + name + "','" + email + "','" + phoneno + "')")
 		if rows != nil {
@@ -41,6 +42,7 @@ func createbuyer(c *gin.Context) {
 			"name":    name,
 			"email":   email,
 			"phoneno": phoneno,
+			"role":    role,
 		})
 	} else {
 		c.IndentedJSON(http.StatusNotFound, gin.H{

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,102 +46,95 @@ func createproduct(c *gin.Context) {
 	if err != nil {
 		fmt.Println("could not connect to database: ", err)
 	}
-	seller_id := c.Param("seller_id")
 	email := c.PostForm("email")
 	name := c.PostForm("name")
 	price := c.PostForm("price")
 	tax := c.PostForm("tax")
+	seller_id := c.Param("seller")
+	fmt.Println(seller_id)
 
-	fmt.Println(email)
-
-	rows, err := db.Query("SELECT email FROM seller WHERE email='" + email + "'")
-	if rows != nil {
-		fmt.Println("selected successfully", rows)
-	} else {
-		fmt.Println("error", err)
-	}
-	for rows.Next() {
-		emp := Seller{}
-
-		err = rows.Scan(&emp.Email)
-		if err != nil {
-			fmt.Println("scan error", err)
-		}
-	}
 	emp := Seller{}
-	fmt.Println(emp.Email, email)
-	if email == emp.Email {
-		fmt.Println(emp.Email)
-		// select * from seller,products  where seller.id=products.seller_id;
-		// INSERT INTO products(name, price, tax, seller_id)VALUES('phone',10000,5,1)
-		rows, err = db.Query("INSERT INTO products( name , price, tax,seller_id)	VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "') ")
-		if rows != nil {
-			fmt.Println("inserted successfully", err)
+	err = db.QueryRow("SELECT * FROM seller WHERE email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
+	fmt.Println(emp.Role)
+	switch {
+	case emp.Role == "2":
+
+		rows, err := db.Query("INSERT INTO products( name , price, tax,seller_id)	VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "') ")
+		if err != nil {
+			fmt.Println("inserted successfully", rows)
 		} else {
-			fmt.Println("error", err)
+			fmt.Println("error")
 		}
+		c.IndentedJSON(http.StatusOK, gin.H{
+			"email": email,
+			"name":  name,
+			"price": price,
+			"tax":   tax,
+		})
 
-		for rows.Next() {
-			emp := Product{}
-
-			err = rows.Scan(&emp.Name, &emp.Tax, &emp.Price)
-			if err != nil {
-				fmt.Println("scan error", err)
-			}
-			c.IndentedJSON(http.StatusOK, gin.H{
-				"name":  name,
-				"price": price,
-				"tax":   tax,
-			})
-		}
-	} else {
-
+		return
+	case err != nil:
 		c.IndentedJSON(http.StatusOK, gin.H{
 			"Message": "Email id not regestered",
 		})
+		return
+	default:
+		c.IndentedJSON(http.StatusOK, "empty")
 	}
-
 }
 
 //----------------------------------------------orderproduct-----------------------------------------//
 
-func buyproduct(c *gin.Context) {
+func orderproduct(c *gin.Context) {
 
 	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
 	if err != nil {
 		fmt.Println("could not connect to database: ", err)
 	}
 	email := c.PostForm("email")
-	// quantity := c.PostForm("quantity")
-	// name := c.PostForm("name")
+	quantity := c.PostForm("quantity")
+
 	fmt.Println(email)
-	rows, err := db.Query("SELECT product_id,  seller_id FROM products JOIN seller_id=1")
-	if rows != nil {
-		fmt.Println("selected successfully", err)
-	} else {
-		fmt.Println("error", err)
-
+	emp := Buyer{}
+	res := Product{}
+	err = db.QueryRow("SELECT * from buyer where email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
+	if err != nil {
+		fmt.Println("selected", err)
 	}
 
-	for rows.Next() {
-		emp := Buyer{}
-
-		err = rows.Scan(&emp.Email)
+	switch {
+	case emp.Role == "1":
+		err = db.QueryRow("SELECT * from buyer, products Where email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role, &res.Id, &res.Name, &res.Price, &res.Tax, &res.Seller_id)
 		if err != nil {
-			fmt.Println("scan error", err)
-		}
-		if email == emp.Email {
-			fmt.Println(emp.Email, email)
-
-			c.IndentedJSON(http.StatusOK, gin.H{
-				"Message": "You can order your product ",
-			})
+			fmt.Println("inserted successfully")
 		} else {
-			c.IndentedJSON(http.StatusOK, gin.H{
-				"Message": "email not regester ",
-			})
+			fmt.Println("error", err)
 		}
+		quan, err := strconv.ParseFloat(quantity, 64)
+		fmt.Println(quan, err)
+		total_price := (quan * (res.Price))
+		fmt.Println(total_price)
+		total_tax := (quan) * res.Tax
+		fmt.Println(total_tax)
+		total := total_price + total_tax
+		fmt.Println(total)
+		c.IndentedJSON(http.StatusOK, gin.H{
+			"Message":   "You can order your product ",
+			"email":     emp.Email,
+			"Name":      res.Name,
+			"Tax":       res.Tax,
+			"Price":     res.Price,
+			"total":     total,
+			"seller_id": res.Seller_id,
+		})
+		return
+	case err != nil:
+		c.IndentedJSON(http.StatusOK, gin.H{
+			"Message": "email not regester ",
+		})
+		return
 
+	default:
+		c.IndentedJSON(http.StatusOK, "404")
 	}
-
 }

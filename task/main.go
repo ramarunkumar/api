@@ -21,9 +21,10 @@ func main() {
 	router.GET("/buyer/:id", getbuyerId)
 	//----------------------------finished--------------------------------------//
 
-	router.POST("/createproduct/seller:seller_id", createproduct)
+	router.POST("/createproduct/seller/:seller", createproduct)
+	router.GET("/orderproduct/buyer", orderproduct)
 	router.GET("/product/:id", getproductID)
-	router.GET("/buyproduct", buyproduct)
+
 	router.Run()
 }
 
