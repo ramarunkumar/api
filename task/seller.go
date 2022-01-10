@@ -20,29 +20,20 @@ func createseller(c *gin.Context) {
 	phoneno := c.PostForm("phoneno")
 
 	fmt.Println(name)
-
+	emp := Seller{}
 	if _, err := sellervalid(name, email, phoneno); err == nil {
-		rows, err := db.Query("INSERT INTO seller(name, email,phoneno) VALUES('" + name + "','" + email + "','" + phoneno + "')")
+		rows := db.QueryRow("INSERT INTO seller(name, email,phoneno) VALUES('"+name+"','"+email+"','"+phoneno+"')").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 		if rows != nil {
 			fmt.Println("error", rows)
 		} else {
 			fmt.Println("insert error", err)
 		}
-
-		for rows.Next() {
-			emp := Seller{}
-
-			err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
-			if err != nil {
-				fmt.Println("scan error", err)
-			}
-
-		}
 		c.IndentedJSON(http.StatusOK, gin.H{
+
 			"name":    name,
 			"email":   email,
 			"phoneno": phoneno,
-			"role":    2,
+			"Message": "Registered Successfully",
 		})
 
 	} else {
