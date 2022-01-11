@@ -38,6 +38,30 @@ func getproductID(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Product not found"})
 }
+func getAllproducts(c *gin.Context) {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	}
+	rows, err := db.Query("SELECT * FROM products order by id ASC ")
+	if err != nil {
+		fmt.Println("error")
+	}
+	res := []Product{}
+
+	for rows.Next() {
+		emp := Product{}
+
+		err = rows.Scan(&emp.Id, &emp.Name, &emp.Price, &emp.Tax, &emp.Seller_id)
+		if err != nil {
+			fmt.Println("scan error", err)
+		}
+
+		res = append(res, emp)
+	}
+	fmt.Println(res)
+	c.IndentedJSON(http.StatusOK, res)
+}
 
 //-----------------------------------------------seller create product----------------------------------//
 
@@ -55,11 +79,10 @@ func createproduct(c *gin.Context) {
 
 	emp := Seller{}
 	err = db.QueryRow("SELECT * FROM seller WHERE email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
-	fmt.Println(emp.Role)
 	switch {
 	case emp.Role == "2":
 
-		rows, err := db.Query("INSERT INTO products( name , price, tax,seller_id)	VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "') ")
+		rows, err := db.Query("INSERT INTO products( name , price, tax,seller_id)VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "') ")
 		if err != nil {
 			fmt.Println("inserted successfully", rows)
 		} else {
@@ -92,6 +115,7 @@ func orderproduct(c *gin.Context) {
 		fmt.Println("could not connect to database: ", err)
 	}
 	email := c.PostForm("email")
+	name := c.PostForm("name")
 	quantity := c.PostForm("quantity")
 
 	fmt.Println(email)
@@ -102,9 +126,11 @@ func orderproduct(c *gin.Context) {
 		fmt.Println("selected", err)
 	}
 
+	fmt.Println(name, res.Name)
 	switch {
+
 	case emp.Role == "1":
-		err = db.QueryRow("SELECT * from buyer, products Where email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role, &res.Id, &res.Name, &res.Price, &res.Tax, &res.Seller_id)
+		err = db.QueryRow("SELECT * from buyer, products Where buyer.email='"+email+"'AND products.name='"+name+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role, &res.Id, &res.Name, &res.Price, &res.Tax, &res.Seller_id)
 		if err != nil {
 			fmt.Println("inserted successfully")
 		} else {
@@ -113,19 +139,19 @@ func orderproduct(c *gin.Context) {
 		quan, err := strconv.ParseFloat(quantity, 64)
 		fmt.Println(quan, err)
 		total_price := (quan * (res.Price))
-		fmt.Println(total_price)
+		fmt.Println("total price", total_price)
+
 		total_tax := (quan) * res.Tax
-		fmt.Println(total_tax)
+		fmt.Println("total tax", total_tax)
 		total := total_price + total_tax
-		fmt.Println(total)
+		fmt.Println("total", total)
 		c.IndentedJSON(http.StatusOK, gin.H{
-			"Message":   "You can order your product ",
-			"email":     emp.Email,
-			"Name":      res.Name,
-			"Tax":       res.Tax,
-			"Price":     res.Price,
-			"total":     total,
-			"seller_id": res.Seller_id,
+			"Message": "You can order your product ",
+			"email":   emp.Email,
+			"Name":    res.Name,
+			"Tax":     res.Tax,
+			"Price":   res.Price,
+			"total":   total,
 		})
 		return
 	case err != nil:
