@@ -28,13 +28,7 @@ func createseller(c *gin.Context) {
 		} else {
 			fmt.Println("insert error", err)
 		}
-		c.IndentedJSON(http.StatusOK, gin.H{
-
-			"name":    name,
-			"email":   email,
-			"phoneno": phoneno,
-			"Message": "Registered Successfully",
-		})
+		c.IndentedJSON(http.StatusOK, emp)
 
 	} else {
 		c.IndentedJSON(http.StatusNotFound, gin.H{

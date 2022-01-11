@@ -88,12 +88,7 @@ func createproduct(c *gin.Context) {
 		} else {
 			fmt.Println("error")
 		}
-		c.IndentedJSON(http.StatusOK, gin.H{
-			"email": email,
-			"name":  name,
-			"price": price,
-			"tax":   tax,
-		})
+		c.IndentedJSON(http.StatusOK, emp)
 
 		return
 	case err != nil:
