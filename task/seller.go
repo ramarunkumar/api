@@ -5,16 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 func createseller(c *gin.Context) {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
+	db := dbinit()
 	name := c.PostForm("name")
 	email := c.PostForm("email")
 	phoneno := c.PostForm("phoneno")
@@ -68,13 +66,10 @@ func sellervalid(name, email, phoneno string) (*Seller, error) {
 }
 
 func selleremailavailable(email string) bool {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
+	db := dbinit()
 	stmt := "SELECT email FROM seller WHERE email = ('" + email + "')"
 	fmt.Println(stmt)
-	err = db.QueryRow(stmt).Scan(&email)
+	err := db.QueryRow(stmt).Scan(&email)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			fmt.Println("email error", err)
@@ -86,13 +81,10 @@ func selleremailavailable(email string) bool {
 }
 
 func phonenoavailableseller(phoneno string) bool {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
+	db := dbinit()
 	stmt := "SELECT phoneno FROM seller WHERE phoneno = ('" + phoneno + "')"
 	fmt.Println(stmt)
-	err = db.QueryRow(stmt).Scan(&phoneno)
+	err := db.QueryRow(stmt).Scan(&phoneno)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			fmt.Println("email error", err)
@@ -102,36 +94,32 @@ func phonenoavailableseller(phoneno string) bool {
 
 	return true
 }
+
+//-----------------------------------------------------getAllseller------------------------------------//
+
 func getAllSeller(c *gin.Context) {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
+	db := dbinit()
 	rows, err := db.Query("SELECT * FROM seller")
 	if err != nil {
 		fmt.Println("error")
 	}
 	res := []Seller{}
-
 	for rows.Next() {
 		emp := Seller{}
-
 		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 		if err != nil {
 			fmt.Println("scan error", err)
 		}
-
 		res = append(res, emp)
 	}
 	fmt.Println(res)
 	c.IndentedJSON(http.StatusOK, res)
 }
 
+//-------------------------------------------getsellerId---------------------------------------//
+
 func getsellerId(c *gin.Context) {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
+	db := dbinit()
 	id := c.Param("id")
 	fmt.Println(id)
 	res := []Seller{}

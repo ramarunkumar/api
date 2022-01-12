@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -9,12 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func getproductID(c *gin.Context) {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
+//--------------------------------------------------getProductId-------------------------------------//
 
+func getproductID(c *gin.Context) {
+	db := dbinit()
 	id := c.Param("id")
 	fmt.Println(id)
 	res := []Product{}
@@ -25,7 +22,6 @@ func getproductID(c *gin.Context) {
 	}
 	for rows.Next() {
 		emp := Product{}
-
 		err = rows.Scan(&emp.Id, &emp.Name, &emp.Price, &emp.Tax, &emp.Seller_id)
 		if err != nil {
 			fmt.Println("scan error", err)
@@ -35,28 +31,23 @@ func getproductID(c *gin.Context) {
 			return
 		}
 	}
-
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Product not found"})
 }
+
+//-------------------------------getAllproducts-------------------------------------------------------//
 func getAllproducts(c *gin.Context) {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
+	db := dbinit()
 	rows, err := db.Query("SELECT * FROM products order by id ASC ")
 	if err != nil {
 		fmt.Println("error")
 	}
 	res := []Product{}
-
 	for rows.Next() {
 		emp := Product{}
-
 		err = rows.Scan(&emp.Id, &emp.Name, &emp.Price, &emp.Tax, &emp.Seller_id)
 		if err != nil {
 			fmt.Println("scan error", err)
 		}
-
 		res = append(res, emp)
 	}
 	fmt.Println(res)
@@ -66,10 +57,7 @@ func getAllproducts(c *gin.Context) {
 //-----------------------------------------------seller create product----------------------------------//
 
 func createproduct(c *gin.Context) {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
+	db := dbinit()
 	email := c.PostForm("email")
 	name := c.PostForm("name")
 	price := c.PostForm("price")
@@ -78,7 +66,7 @@ func createproduct(c *gin.Context) {
 	fmt.Println(seller_id)
 
 	emp := Seller{}
-	err = db.QueryRow("SELECT * FROM seller WHERE email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
+	err := db.QueryRow("SELECT * FROM seller WHERE email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 	switch {
 	case emp.Role == "2":
 
@@ -104,26 +92,19 @@ func createproduct(c *gin.Context) {
 //----------------------------------------------orderproduct-----------------------------------------//
 
 func orderproduct(c *gin.Context) {
-
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
+	db := dbinit()
 	email := c.PostForm("email")
 	name := c.PostForm("name")
 	quantity := c.PostForm("quantity")
-
 	fmt.Println(email)
 	emp := Buyer{}
 	res := Product{}
-	err = db.QueryRow("SELECT * from buyer where email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
+	err := db.QueryRow("SELECT * from buyer where email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 	if err != nil {
 		fmt.Println("selected", err)
 	}
-
 	fmt.Println(name, res.Name)
 	switch {
-
 	case emp.Role == "1":
 		err = db.QueryRow("SELECT * from buyer, products Where buyer.email='"+email+"'AND products.name='"+name+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role, &res.Id, &res.Name, &res.Price, &res.Tax, &res.Seller_id)
 		if err != nil {
@@ -135,7 +116,6 @@ func orderproduct(c *gin.Context) {
 		fmt.Println(quan, err)
 		total_price := (quan * (res.Price))
 		fmt.Println("total price", total_price)
-
 		total_tax := (quan) * res.Tax
 		fmt.Println("total tax", total_tax)
 		total := total_price + total_tax
@@ -154,7 +134,6 @@ func orderproduct(c *gin.Context) {
 			"Message": "email not regester ",
 		})
 		return
-
 	default:
 		c.IndentedJSON(http.StatusOK, "404")
 	}

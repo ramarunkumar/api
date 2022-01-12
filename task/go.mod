@@ -9,5 +9,6 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/lib/pq v1.10.4
+	go.mongodb.org/mongo-driver v1.8.2
 	mellium.im/sasl v0.2.1 // indirect
 )

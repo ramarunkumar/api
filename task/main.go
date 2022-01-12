@@ -1,20 +1,18 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
-	pg "github.com/go-pg/pg"
 	_ "github.com/lib/pq"
 )
 
 func main() {
+	dbinit()
 	router := gin.Default()
-	pg := dbconc()
-	fmt.Println(pg)
+
 	router.GET("/", homepage)
 
 	router.POST("/seller/create", createseller)
@@ -36,25 +34,14 @@ func homepage(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, "E-commerce API")
 }
 
-func dbconc() *pg.DB {
-	opts := &pg.Options{
-		User:     "postgres",
-		Password: "qwerty123",
-		Addr:     "localhost:5432",
-		Database: "api",
-	}
-	var db *pg.DB = pg.Connect(opts)
-	if db == nil {
-		fmt.Println("failed")
-		os.Exit(100)
-	}
-	fmt.Println("successfully")
-	closeErr := db.Close()
-	if closeErr != nil {
-		fmt.Println("error")
-		os.Exit(100)
-	}
-	log.Printf("connected")
+//-----------------------------------------------------dbconnection-----------------------------//
 
+func dbinit() *sql.DB {
+	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	if err != nil {
+		fmt.Println("could not connect to database: ", err)
+	} else {
+		fmt.Println("Coonected...", db)
+	}
 	return db
 }
