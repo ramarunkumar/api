@@ -11,11 +11,7 @@ import (
 )
 
 func createbuyer(c *gin.Context) {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
-	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
-
+	db := dbinit()
 	var emp Users
 	if err := c.ShouldBindJSON(&emp); err != nil {
 		fmt.Println("error", err)
@@ -26,7 +22,7 @@ func createbuyer(c *gin.Context) {
 
 	if _, err := buyervalid(name, email, phoneno); err == nil {
 		role := "1"
-		rows, err := db.Query("INSERT INTO users (name, email,phoneno,role) VALUES ('" + name + "','" + email + "','" + phoneno + "','" + role + "')")
+		rows, err := db.Query("INSERT INTO users (name, email,phoneno,role) VALUES ('" + name + "','" + email + "','" + phoneno + "','" + role + "')RETURNING id,name,email,phoneno,role")
 		if rows != nil {
 			fmt.Println("error", err)
 		}
@@ -42,10 +38,10 @@ func createbuyer(c *gin.Context) {
 			fmt.Println(emp.Name, emp.Phoneno, emp.Email)
 			res = append(res, emp)
 		}
-		fmt.Println(res)
-		data := "successfully registered buyer account"
+
 		c.IndentedJSON(http.StatusOK, gin.H{
-			data: emp.Email,
+			"Message": "successfully registered buyer account",
+			"data":    res,
 		})
 	} else {
 		c.IndentedJSON(http.StatusNotFound, gin.H{

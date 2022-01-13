@@ -10,6 +10,13 @@ type Users struct {
 
 type Product struct {
 	Id        string `json:"id"`
+	Name      string `json:"name"`
+	Price     string `json:"price"`
+	Tax       string `json:"tax"`
+	Seller_id string `json:"seller_id"`
+}
+type Order struct {
+	Id        string `json:"id"`
 	Email     string `json:"email" `
 	Name      string `json:"name"`
 	Price     string `json:"price"`

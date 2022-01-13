@@ -64,39 +64,54 @@ func createproduct(c *gin.Context) {
 	if err := c.ShouldBindJSON(&res); err != nil {
 		fmt.Println("bind json error", err)
 	}
-	email := res.Email
+	seller_id := res.Seller_id
 	name := res.Name
 	price := res.Price
 	tax := res.Tax
-	fmt.Println(email, price, tax)
-	fmt.Println("emp", res)
-	var sel Users
-	fmt.Println("SELECT * FROM users WHERE email='" + email + "'")
-	err = db.QueryRow("SELECT * FROM users WHERE email='"+email+"'").Scan(&sel.Id, &sel.Name, &sel.Email, &sel.Phoneno, &sel.Role)
-	res.Seller_id = sel.Id
 
-	fmt.Println(res, sel.Name, "role", sel.Role, res.Seller_id)
+	fmt.Println("emp", res)
+
+	var pro Product
+	var sel Users
+
+	id := res.Seller_id
+
+	fmt.Println("SELECT * FROM users,products WHERE seller_id='" + seller_id + "'AND users.id='" + id + "'")
+	err = db.QueryRow("SELECT * FROM users,products WHERE seller_id='"+seller_id+"'AND users.id='"+id+"'").Scan(&sel.Id, &sel.Name, &sel.Email, &sel.Phoneno, &sel.Role, &pro.Id, &pro.Name, &pro.Price, &pro.Tax, &pro.Seller_id)
+	fmt.Println("role", sel.Role)
+	fmt.Println(sel.Id, pro.Seller_id)
 	switch {
 	case sel.Role == "2":
 		fmt.Println(sel.Role)
+		// res.Seller_id = sel.Id
 		seller_id := res.Seller_id
-
 		fmt.Println("INSERT INTO products( name , price, tax,seller_id)VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "')")
-		rows, err := db.Query("INSERT INTO products( name , price, tax,seller_id)VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "')")
+		rows, err := db.Query("INSERT INTO products( name , price, tax,seller_id)VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "')RETURNING id,name,price,tax,seller_id")
 		if err != nil {
-			fmt.Println("insert ", rows)
+			fmt.Println("insert ", err)
 		} else {
-			fmt.Println("insert error", err)
+			fmt.Println("inserted", rows)
+		}
+		p := []Product{}
+		for rows.Next() {
+			emp := Product{}
+			err = rows.Scan(&emp.Id, &emp.Name, &emp.Price, &emp.Tax, &emp.Seller_id)
+			if err != nil {
+				fmt.Println("scan error", err)
+			}
+			p = append(p, emp)
 		}
 		data := "successfully added products"
 		c.IndentedJSON(http.StatusOK, gin.H{
-			data: name,
+			data:   name,
+			"data": p,
 		})
+
 		return
 
 	case err != nil:
 		c.IndentedJSON(http.StatusOK, gin.H{
-			"Message": "seller Email id not regestered",
+			"Message": "seller  id not regestered",
 		})
 		return
 	default:
@@ -109,7 +124,7 @@ func createproduct(c *gin.Context) {
 func orderproduct(c *gin.Context) {
 	db := dbinit()
 	var emp Users
-	var res Product
+	var res Order
 	if err := c.ShouldBindJSON(&res); err != nil {
 		fmt.Println("error", err)
 	}

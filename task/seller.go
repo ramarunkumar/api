@@ -13,31 +13,43 @@ import (
 
 func createseller(c *gin.Context) {
 	db := dbinit()
-
 	var emp Users
 	if err := c.ShouldBindJSON(&emp); err != nil {
 		fmt.Println("error", err)
 	}
-	Name := emp.Name
-	Email := emp.Email
-	Phoneno := emp.Phoneno
+	name := emp.Name
+	email := emp.Email
+	phoneno := emp.Phoneno
 
-	fmt.Println("name", Name, Email, Phoneno)
-	if _, err := sellervalid(Name, Email, Phoneno); err == nil {
-		var res Users
+	if _, err := sellervalid(name, email, phoneno); err == nil {
 		role := "2"
-		rows := db.QueryRow("INSERT INTO users(name, email,phoneno,role) VALUES('"+Name+"','"+Email+"','"+Phoneno+"','"+role+"')").Scan(&res.Id, &res.Name, &res.Email, &res.Phoneno, &res.Role)
+		rows, err := db.Query("INSERT INTO users (name, email,phoneno,role) VALUES ('" + name + "','" + email + "','" + phoneno + "','" + role + "')RETURNING id,name,email,phoneno,role")
 		if rows != nil {
-			fmt.Println("inserted", rows)
+			fmt.Println("error", err)
 		}
-		data := "successfully registered seller account"
-		c.IndentedJSON(http.StatusOK, gin.H{
-			data: emp.Email,
-		})
+		res := []Users{}
+		fmt.Println(emp.Id)
+		for rows.Next() {
+			emp := Users{}
 
+			err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
+			if err != nil {
+				fmt.Println("scan error", err)
+			}
+			fmt.Println(emp.Name, emp.Phoneno, emp.Email)
+			res = append(res, emp)
+		}
+		fmt.Println("hhh", res)
+
+		c.IndentedJSON(http.StatusOK, gin.H{
+			"Message": "successfully registered seller account",
+			"data":    res,
+		})
 	} else {
 		c.IndentedJSON(http.StatusNotFound, gin.H{
+
 			"Message": err.Error()})
+
 	}
 }
 
