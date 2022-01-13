@@ -104,7 +104,7 @@ func phonenoavailableseller(phoneno string) bool {
 
 func getAllSeller(c *gin.Context) {
 	db := dbinit()
-	rows, err := db.Query("SELECT * FROM users")
+	rows, err := db.Query("SELECT * FROM users where role=2")
 	if err != nil {
 		fmt.Println("error")
 	}
@@ -126,11 +126,11 @@ func getAllSeller(c *gin.Context) {
 
 func getsellerId(c *gin.Context) {
 	db := dbinit()
-	id := c.Param("id")
+	id := c.Param("role")
 	fmt.Println(id)
 	res := []Users{}
 	fmt.Println(res)
-	rows, err := db.Query("SELECT * FROM users")
+	rows, err := db.Query("SELECT * FROM users where role=2")
 	if err != nil {
 		fmt.Println("error")
 	}

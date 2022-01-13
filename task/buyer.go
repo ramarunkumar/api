@@ -119,26 +119,21 @@ func phonenoavailablebuyer(phoneno string) bool {
 }
 
 func getAllBuyers(c *gin.Context) {
-	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
+	db := dbinit()
+	rows, err := db.Query("SELECT * FROM users where role=1")
 	if err != nil {
-		fmt.Println("could not connect to database: ", err)
-	}
-
-	rows, err := db.Query("SELECT * FROM users")
-	if rows != nil {
-		fmt.Println("error", err)
+		fmt.Println("error")
 	}
 	res := []Users{}
 	for rows.Next() {
 		emp := Users{}
-
 		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 		if err != nil {
 			fmt.Println("scan error", err)
 		}
-
 		res = append(res, emp)
 	}
+
 	fmt.Println(res)
 	c.IndentedJSON(http.StatusOK, res)
 }
@@ -152,7 +147,7 @@ func getbuyerId(c *gin.Context) {
 	fmt.Println(id)
 	res := []Users{}
 	fmt.Println(res)
-	rows, err := db.Query("SELECT * FROM users")
+	rows, err := db.Query("SELECT * FROM users where role=1")
 	if err != nil {
 		fmt.Println("error")
 	}

@@ -92,7 +92,6 @@ func createproduct(c *gin.Context) {
 		c.IndentedJSON(http.StatusOK, gin.H{
 			data: name,
 		})
-
 		return
 
 	case err != nil:
@@ -132,13 +131,17 @@ func orderproduct(c *gin.Context) {
 		}
 		fmt.Println(res.Tax, res.Price, res.Quantity)
 		tax, err := strconv.ParseFloat(res.Tax, 64)
-		fmt.Println(err)
+		if err != nil {
+			fmt.Println(err)
+		}
 		quan, err := strconv.ParseFloat(quantity, 64)
-		fmt.Println(err)
-
+		if err != nil {
+			fmt.Println(err)
+		}
 		pri, err := strconv.ParseFloat(res.Price, 64)
-		fmt.Println(err)
-
+		if err != nil {
+			fmt.Println(err)
+		}
 		total_price := quan * pri //2*20=40
 		fmt.Println("total price", total_price)
 		total_tax := (quan * tax) //2*4=8
