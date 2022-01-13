@@ -15,16 +15,16 @@ func main() {
 
 	router.GET("/", homepage)
 
-	router.POST("/seller/create", createseller)
+	router.POST("/createseller", createseller)
 	router.GET("/sellers", getAllSeller)
 	router.GET("/seller/:id", getsellerId)
 
-	router.POST("/buyer/create", createbuyer)
+	router.POST("/createbuyer", createbuyer)
 	router.GET("/buyers", getAllBuyers)
-	router.GET("/buyer/:id", getbuyerId)
+	router.GET("/buyer/:role", getbuyerId)
 
-	router.POST("/createproduct/seller/:seller", createproduct)
-	router.GET("/orderproduct/buyer", orderproduct)
+	router.POST("/createproduct", createproduct)
+	router.GET("/orderproduct", orderproduct)
 	router.GET("/products", getAllproducts)
 	router.GET("/product/:id", getproductID)
 	router.Run()
@@ -34,14 +34,12 @@ func homepage(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, "E-commerce API")
 }
 
-//-----------------------------------------------------dbconnection-----------------------------//
+//---------------------------------------------dbconnection-----------------------------//
 
 func dbinit() *sql.DB {
 	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
 	if err != nil {
 		fmt.Println("could not connect to database: ", err)
-	} else {
-		fmt.Println("Coonected...", db)
 	}
 	return db
 }

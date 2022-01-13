@@ -13,30 +13,35 @@ import (
 
 func createseller(c *gin.Context) {
 	db := dbinit()
-	name := c.PostForm("name")
-	email := c.PostForm("email")
-	phoneno := c.PostForm("phoneno")
 
-	fmt.Println(name)
-	emp := Seller{}
-	if _, err := sellervalid(name, email, phoneno); err == nil {
-		rows := db.QueryRow("INSERT INTO seller(name, email,phoneno) VALUES('"+name+"','"+email+"','"+phoneno+"')").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
+	var emp Users
+	if err := c.ShouldBindJSON(&emp); err != nil {
+		fmt.Println("error", err)
+	}
+	Name := emp.Name
+	Email := emp.Email
+	Phoneno := emp.Phoneno
+
+	fmt.Println("name", Name, Email, Phoneno)
+	if _, err := sellervalid(Name, Email, Phoneno); err == nil {
+		var res Users
+		role := "2"
+		rows := db.QueryRow("INSERT INTO users(name, email,phoneno,role) VALUES('"+Name+"','"+Email+"','"+Phoneno+"','"+role+"')").Scan(&res.Id, &res.Name, &res.Email, &res.Phoneno, &res.Role)
 		if rows != nil {
-			fmt.Println("error", rows)
-		} else {
-			fmt.Println("insert error", err)
+			fmt.Println("inserted", rows)
 		}
-		c.IndentedJSON(http.StatusOK, emp)
+		data := "successfully registered seller account"
+		c.IndentedJSON(http.StatusOK, gin.H{
+			data: emp.Email,
+		})
 
 	} else {
 		c.IndentedJSON(http.StatusNotFound, gin.H{
-
 			"Message": err.Error()})
-
 	}
 }
 
-func sellervalid(name, email, phoneno string) (*Seller, error) {
+func sellervalid(name, email, phoneno string) (*Users, error) {
 
 	if selleremailavailable(email) {
 		return nil, errors.New("email not available")
@@ -60,14 +65,14 @@ func sellervalid(name, email, phoneno string) (*Seller, error) {
 		return nil, errors.New("phone number  only 10 digit ")
 
 	}
-	u := Seller{Name: name, Email: email, Phoneno: phoneno}
+	u := Users{Name: name, Email: email, Phoneno: phoneno}
 
 	return &u, nil
 }
 
 func selleremailavailable(email string) bool {
 	db := dbinit()
-	stmt := "SELECT email FROM seller WHERE email = ('" + email + "')"
+	stmt := "SELECT email FROM users WHERE email = ('" + email + "')"
 	fmt.Println(stmt)
 	err := db.QueryRow(stmt).Scan(&email)
 	if err != nil {
@@ -82,7 +87,7 @@ func selleremailavailable(email string) bool {
 
 func phonenoavailableseller(phoneno string) bool {
 	db := dbinit()
-	stmt := "SELECT phoneno FROM seller WHERE phoneno = ('" + phoneno + "')"
+	stmt := "SELECT phoneno FROM users WHERE phoneno = ('" + phoneno + "')"
 	fmt.Println(stmt)
 	err := db.QueryRow(stmt).Scan(&phoneno)
 	if err != nil {
@@ -99,19 +104,20 @@ func phonenoavailableseller(phoneno string) bool {
 
 func getAllSeller(c *gin.Context) {
 	db := dbinit()
-	rows, err := db.Query("SELECT * FROM seller")
+	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
 		fmt.Println("error")
 	}
-	res := []Seller{}
+	res := []Users{}
 	for rows.Next() {
-		emp := Seller{}
+		emp := Users{}
 		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 		if err != nil {
 			fmt.Println("scan error", err)
 		}
 		res = append(res, emp)
 	}
+
 	fmt.Println(res)
 	c.IndentedJSON(http.StatusOK, res)
 }
@@ -122,14 +128,14 @@ func getsellerId(c *gin.Context) {
 	db := dbinit()
 	id := c.Param("id")
 	fmt.Println(id)
-	res := []Seller{}
+	res := []Users{}
 	fmt.Println(res)
-	rows, err := db.Query("SELECT * FROM seller")
+	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
 		fmt.Println("error")
 	}
 	for rows.Next() {
-		emp := Seller{}
+		emp := Users{}
 
 		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 		if err != nil {

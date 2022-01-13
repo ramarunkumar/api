@@ -15,21 +15,27 @@ func createbuyer(c *gin.Context) {
 	if err != nil {
 		fmt.Println("could not connect to database: ", err)
 	}
-	name := c.PostForm("name")
-	email := c.PostForm("email")
-	phoneno := c.PostForm("phoneno")
-	role := "2"
+
+	var emp Users
+	if err := c.ShouldBindJSON(&emp); err != nil {
+		fmt.Println("error", err)
+	}
+	name := emp.Name
+	email := emp.Email
+	phoneno := emp.Phoneno
+
 	if _, err := buyervalid(name, email, phoneno); err == nil {
-		rows, err := db.Query("INSERT INTO buyer (name, email,phoneno) VALUES ('" + name + "','" + email + "','" + phoneno + "')")
+		role := "1"
+		rows, err := db.Query("INSERT INTO users (name, email,phoneno,role) VALUES ('" + name + "','" + email + "','" + phoneno + "','" + role + "')")
 		if rows != nil {
 			fmt.Println("error", err)
 		}
-		res := []Buyer{}
+		res := []Users{}
 
 		for rows.Next() {
-			emp := Buyer{}
+			emp := Users{}
 
-			err = rows.Scan(&emp.Id, &emp.Name, &emp.Phoneno, &emp.Role)
+			err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 			if err != nil {
 				fmt.Println("scan error", err)
 			}
@@ -37,12 +43,9 @@ func createbuyer(c *gin.Context) {
 			res = append(res, emp)
 		}
 		fmt.Println(res)
-
+		data := "successfully registered buyer account"
 		c.IndentedJSON(http.StatusOK, gin.H{
-			"name":    name,
-			"email":   email,
-			"phoneno": phoneno,
-			"role":    role,
+			data: emp.Email,
 		})
 	} else {
 		c.IndentedJSON(http.StatusNotFound, gin.H{
@@ -52,7 +55,7 @@ func createbuyer(c *gin.Context) {
 	}
 }
 
-func buyervalid(name, email, phoneno string) (*Seller, error) {
+func buyervalid(name, email, phoneno string) (*Users, error) {
 	if !strings.Contains(email, "@") {
 
 		return nil, errors.New("email must have symbol @")
@@ -74,7 +77,7 @@ func buyervalid(name, email, phoneno string) (*Seller, error) {
 		return nil, errors.New("phone number only 10 digit")
 
 	}
-	u := Seller{Name: name, Email: email, Phoneno: phoneno}
+	u := Users{Name: name, Email: email, Phoneno: phoneno}
 
 	return &u, nil
 }
@@ -84,7 +87,7 @@ func buyeremailavailable(email string) bool {
 	if err != nil {
 		fmt.Println("could not connect to database: ", err)
 	}
-	stmt := "SELECT email FROM buyer WHERE email = ('" + email + "')"
+	stmt := "SELECT email FROM users WHERE email = ('" + email + "')"
 	fmt.Println(stmt)
 	err = db.QueryRow(stmt).Scan(&email)
 	if err != nil {
@@ -102,7 +105,7 @@ func phonenoavailablebuyer(phoneno string) bool {
 	if err != nil {
 		fmt.Println("could not connect to database: ", err)
 	}
-	stmt := "SELECT phoneno FROM buyer WHERE phoneno = ('" + phoneno + "')"
+	stmt := "SELECT phoneno FROM users WHERE phoneno = ('" + phoneno + "')"
 	fmt.Println(stmt)
 	err = db.QueryRow(stmt).Scan(&phoneno)
 	if err != nil {
@@ -121,13 +124,13 @@ func getAllBuyers(c *gin.Context) {
 		fmt.Println("could not connect to database: ", err)
 	}
 
-	rows, err := db.Query("SELECT * FROM buyer")
+	rows, err := db.Query("SELECT * FROM users")
 	if rows != nil {
 		fmt.Println("error", err)
 	}
-	res := []Buyer{}
+	res := []Users{}
 	for rows.Next() {
-		emp := Buyer{}
+		emp := Users{}
 
 		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 		if err != nil {
@@ -145,22 +148,22 @@ func getbuyerId(c *gin.Context) {
 	if err != nil {
 		fmt.Println("could not connect to database: ", err)
 	}
-	id := c.Param("id")
+	id := c.Param("role")
 	fmt.Println(id)
-	res := []Buyer{}
+	res := []Users{}
 	fmt.Println(res)
-	rows, err := db.Query("SELECT * FROM buyer")
+	rows, err := db.Query("SELECT * FROM users")
 	if err != nil {
 		fmt.Println("error")
 	}
 	for rows.Next() {
-		emp := Seller{}
+		emp := Users{}
 
 		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 		if err != nil {
 			fmt.Println("scan error", err)
 		}
-		if id == emp.Id {
+		if id == emp.Role {
 			c.IndentedJSON(http.StatusOK, emp)
 			return
 		}

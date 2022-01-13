@@ -1,6 +1,6 @@
 package main
 
-type Seller struct {
+type Users struct {
 	Id      string `json:"id"`
 	Name    string `json:"name"`
 	Email   string `json:"email"`
@@ -8,18 +8,12 @@ type Seller struct {
 	Role    string `json:"role"`
 }
 
-type Buyer struct {
-	Id      string `json:"id"`
-	Name    string `json:"name"`
-	Email   string `json:"email" `
-	Phoneno int64  `json:"phoneno"`
-	Role    string `json:"role"`
-}
-
 type Product struct {
-	Id        string  `json:"id"`
-	Name      string  `json:"name"`
-	Tax       float64 `json:"tax"`
-	Price     float64 `json:"price"`
-	Seller_id string  `json:"seller_id"`
+	Id        string `json:"id"`
+	Email     string `json:"email" `
+	Name      string `json:"name"`
+	Price     string `json:"price"`
+	Tax       string `json:"tax"`
+	Seller_id string `json:"seller_id"`
+	Quantity  string `json:"quantity"`
 }
