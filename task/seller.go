@@ -11,6 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//-----------------------------------------------createseller--------------------------------------------------//
+
 func createseller(c *gin.Context) {
 	db := dbinit()
 	var emp Users
@@ -53,6 +55,8 @@ func createseller(c *gin.Context) {
 	}
 }
 
+//----------------------------------------sellervalid--------------------------------------------------//
+
 func sellervalid(name, email, phoneno string) (*Users, error) {
 
 	if selleremailavailable(email) {
@@ -82,6 +86,8 @@ func sellervalid(name, email, phoneno string) (*Users, error) {
 	return &u, nil
 }
 
+//------------------------------------------selleremailavailable---------------------------------------//
+
 func selleremailavailable(email string) bool {
 	db := dbinit()
 	stmt := "SELECT email FROM users WHERE email = ('" + email + "')"
@@ -96,6 +102,8 @@ func selleremailavailable(email string) bool {
 
 	return true
 }
+
+//------------------------------------------phonenoavailableseller---------------------------------------//
 
 func phonenoavailableseller(phoneno string) bool {
 	db := dbinit()

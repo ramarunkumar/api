@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//----------------------------------------createbuyer--------------------------------------------------//
+
 func createbuyer(c *gin.Context) {
 	db := dbinit()
 	var emp Users
@@ -51,6 +53,8 @@ func createbuyer(c *gin.Context) {
 	}
 }
 
+//------------------------------------------------buyervalid----------------------------------------//
+
 func buyervalid(name, email, phoneno string) (*Users, error) {
 	if !strings.Contains(email, "@") {
 
@@ -78,6 +82,8 @@ func buyervalid(name, email, phoneno string) (*Users, error) {
 	return &u, nil
 }
 
+//------------------------------------------------buyeremailavailable----------------------------------------//
+
 func buyeremailavailable(email string) bool {
 	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
 	if err != nil {
@@ -96,6 +102,8 @@ func buyeremailavailable(email string) bool {
 	return true
 }
 
+//------------------------------------------------phonenoavailablebuyer----------------------------------------//
+
 func phonenoavailablebuyer(phoneno string) bool {
 	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")
 	if err != nil {
@@ -113,6 +121,8 @@ func phonenoavailablebuyer(phoneno string) bool {
 
 	return true
 }
+
+//--------------------------------------------getAllBuyers----------------------------------------------------------//
 
 func getAllBuyers(c *gin.Context) {
 	db := dbinit()
@@ -133,6 +143,8 @@ func getAllBuyers(c *gin.Context) {
 	fmt.Println(res)
 	c.IndentedJSON(http.StatusOK, res)
 }
+
+//--------------------------------------------getbuyerId----------------------------------------------------------//
 
 func getbuyerId(c *gin.Context) {
 	db, err := sql.Open("postgres", "postgres://postgres:qwerty123@localhost:5432/api")

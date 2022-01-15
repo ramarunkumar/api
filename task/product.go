@@ -73,10 +73,7 @@ func createproduct(c *gin.Context) {
 
 	var pro Product
 	var sel Users
-
 	id := res.Seller_id
-
-	fmt.Println("SELECT * FROM users,products WHERE seller_id='" + seller_id + "'AND users.id='" + id + "'")
 	err = db.QueryRow("SELECT * FROM users,products WHERE seller_id='"+seller_id+"'AND users.id='"+id+"'").Scan(&sel.Id, &sel.Name, &sel.Email, &sel.Phoneno, &sel.Role, &pro.Id, &pro.Name, &pro.Price, &pro.Tax, &pro.Seller_id)
 	fmt.Println("role", sel.Role)
 	fmt.Println(sel.Id, pro.Seller_id)
@@ -138,8 +135,6 @@ func orderproduct(c *gin.Context) {
 	switch {
 	case emp.Role == "1":
 		fmt.Println(emp.Role)
-
-		fmt.Println("SELECT * from users, products Where users.email='" + email + "'AND products.name='" + name + "'")
 		err := db.QueryRow("SELECT * from users, products Where users.email='"+email+"'AND products.name='"+name+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role, &res.Id, &res.Name, &res.Price, &res.Tax, &res.Seller_id)
 		if err != nil {
 			fmt.Println("no error", err)
