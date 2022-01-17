@@ -107,11 +107,11 @@ func createproduct(c *gin.Context) {
 
 	case err != nil:
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"Message": "seller  id not regestered",
+			"Message": "invalid seller  id ",
 		})
 		return
 	default:
-		c.IndentedJSON(http.StatusOK, "seller  id not regestered")
+		c.IndentedJSON(http.StatusOK, "invalid seller  id")
 	}
 }
 
@@ -119,22 +119,25 @@ func createproduct(c *gin.Context) {
 
 func orderproduct(c *gin.Context) {
 	db := dbinit()
-	var emp Users
 	var res Order
 	if err := c.ShouldBindJSON(&res); err != nil {
 		fmt.Println("error", err)
 	}
-	email := res.Email
+	id := res.Id
+	fmt.Println(id)
+	email := res.Id
 	name := res.Name
 	quantity := res.Quantity
-	fmt.Println(res.Name)
-	err := db.QueryRow("SELECT * from users where email='"+email+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
-	fmt.Println(res.Price)
+	fmt.Println(name, email, quantity)
+	var emp Users
+	err := db.QueryRow("SELECT * from users where users.id='"+id+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
+
+	fmt.Println(err)
 	fmt.Println(emp.Role)
 	switch {
 	case emp.Role == "1":
 		fmt.Println(emp.Role)
-		err := db.QueryRow("SELECT * from users, products Where users.email='"+email+"'AND products.name='"+name+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role, &res.Id, &res.Name, &res.Price, &res.Tax, &res.Seller_id)
+		err := db.QueryRow("SELECT * from users, products Where users.id='"+id+"'AND products.name='"+name+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role, &res.Id, &res.Name, &res.Price, &res.Tax, &res.Seller_id)
 		if err != nil {
 			fmt.Println("no error", err)
 		}
@@ -170,10 +173,10 @@ func orderproduct(c *gin.Context) {
 		return
 	case err != nil:
 		c.IndentedJSON(http.StatusOK, gin.H{
-			"Message": "buyer email not regester ",
+			"Message": "invalid buyer id ",
 		})
 		return
 	default:
-		c.IndentedJSON(http.StatusOK, "empty")
+		c.IndentedJSON(http.StatusOK, "invalid buyer id")
 	}
 }

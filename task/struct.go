@@ -17,7 +17,6 @@ type Product struct {
 }
 type Order struct {
 	Id        string `json:"id"`
-	Email     string `json:"email" `
 	Name      string `json:"name"`
 	Price     string `json:"price"`
 	Tax       string `json:"tax"`
