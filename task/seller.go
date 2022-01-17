@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/mail"
 
 	"strings"
 
@@ -17,18 +18,18 @@ func createseller(c *gin.Context) {
 	db := dbinit()
 	var emp Users
 	if err := c.ShouldBindJSON(&emp); err != nil {
-		fmt.Println("error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"status": "failed"})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"status": "success"})
 	}
-	name := emp.Name
-	email := emp.Email
-	phoneno := emp.Phoneno
 
-	if _, err := sellervalid(name, email, phoneno); err == nil {
+	if _, err := sellervalid(emp.Name, emp.Email, emp.Phoneno); err == nil {
 		role := "2"
-		rows, err := db.Query("INSERT INTO users (name, email,phoneno,role) VALUES ('" + name + "','" + email + "','" + phoneno + "','" + role + "')RETURNING id,name,email,phoneno,role")
+		rows, err := db.Query("INSERT INTO users (name, email,phoneno,role) VALUES ('" + emp.Name + "','" + emp.Email + "','" + emp.Phoneno + "','" + role + "')RETURNING id,name,email,phoneno,role")
 		if rows != nil {
 			fmt.Println("error", err)
 		}
+		fmt.Println(emp.Id)
 		res := []Users{}
 		fmt.Println(emp.Id)
 		for rows.Next() {
@@ -41,7 +42,6 @@ func createseller(c *gin.Context) {
 			fmt.Println(emp.Name, emp.Phoneno, emp.Email)
 			res = append(res, emp)
 		}
-		fmt.Println("hhh", res)
 
 		c.IndentedJSON(http.StatusOK, gin.H{
 			"data":    res,
@@ -62,13 +62,10 @@ func sellervalid(name, email, phoneno string) (*Users, error) {
 	if selleremailavailable(email) {
 		return nil, errors.New("email not available")
 	}
-	if !strings.Contains(email, "@") {
+	if !isvalid(email) {
+		return nil, errors.New("invalid email type")
+	}
 
-		return nil, errors.New("email must have symbol @")
-	}
-	if strings.TrimSpace(email) == "" {
-		return nil, errors.New("the email can't be empty")
-	}
 	if strings.TrimSpace(phoneno) == "" {
 		return nil, errors.New("the phonenumber can't be empty")
 	}
@@ -84,6 +81,10 @@ func sellervalid(name, email, phoneno string) (*Users, error) {
 	u := Users{Name: name, Email: email, Phoneno: phoneno}
 
 	return &u, nil
+}
+func isvalid(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
 }
 
 //------------------------------------------selleremailavailable---------------------------------------//
@@ -146,28 +147,24 @@ func getAllSeller(c *gin.Context) {
 
 func getsellerId(c *gin.Context) {
 	db := dbinit()
-	id := c.Param("role")
+	id := c.Param("id")
 	fmt.Println(id)
 	res := []Users{}
 	fmt.Println(res)
-	rows, err := db.Query("SELECT * FROM users where role=2")
+	rows, err := db.Query("SELECT * FROM users where role=2 and id='" + id + "'")
 	if err != nil {
 		fmt.Println("error")
 	}
 	for rows.Next() {
 		emp := Users{}
-
 		err = rows.Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
 		if err != nil {
 			fmt.Println("scan error", err)
 		}
-
 		if id == emp.Id {
 			c.IndentedJSON(http.StatusOK, emp)
 			return
 		}
 	}
-
 	c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "sellerid not found"})
-
 }

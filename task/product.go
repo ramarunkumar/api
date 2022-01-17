@@ -62,7 +62,9 @@ func createproduct(c *gin.Context) {
 	var err error
 	var res Product
 	if err := c.ShouldBindJSON(&res); err != nil {
-		fmt.Println("bind json error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"status": "failed"})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"status": "success"})
 	}
 	seller_id := res.Seller_id
 	name := res.Name

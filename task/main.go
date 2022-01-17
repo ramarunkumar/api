@@ -17,11 +17,11 @@ func main() {
 
 	router.POST("/createseller", createseller)
 	router.GET("/sellers", getAllSeller)
-	router.GET("/seller/:role", getsellerId)
+	router.GET("/seller/:id", getsellerId)
 
 	router.POST("/createbuyer", createbuyer)
 	router.GET("/buyers", getAllBuyers)
-	router.GET("/buyer/:role", getbuyerId)
+	router.GET("/buyer/:id", getbuyerId)
 
 	router.POST("/createproduct", createproduct)
 	router.POST("/orderproduct", orderproduct)
