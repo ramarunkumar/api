@@ -103,9 +103,7 @@ func createproduct(c *gin.Context) {
 			data:   name,
 			"data": p,
 		})
-
 		return
-
 	case err != nil:
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
 			"Message": "invalid seller  id ",
