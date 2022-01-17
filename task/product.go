@@ -74,13 +74,14 @@ func createproduct(c *gin.Context) {
 	id := res.Seller_id
 	fmt.Println("id", id)
 	err = db.QueryRow("SELECT * FROM users WHERE  users.id='"+id+"'").Scan(&sel.Id, &sel.Name, &sel.Email, &sel.Phoneno, &sel.Role)
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println("no error", err)
+	}
 	fmt.Println("role", sel.Role)
 	fmt.Println(sel.Id)
 	switch {
 	case sel.Role == "2":
 		fmt.Println(sel.Role)
-		seller_id := id
 		fmt.Println("INSERT INTO products( name , price, tax,seller_id)VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "')")
 		rows, err := db.Query("INSERT INTO products( name , price, tax,seller_id)VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "')RETURNING id,name,price,tax,seller_id")
 		if err != nil {
@@ -131,7 +132,9 @@ func orderproduct(c *gin.Context) {
 	fmt.Println(name, email, quantity)
 	var emp Users
 	err := db.QueryRow("SELECT * from users where users.id='"+id+"'").Scan(&emp.Id, &emp.Name, &emp.Email, &emp.Phoneno, &emp.Role)
-
+	if err != nil {
+		fmt.Println("no error ", err)
+	}
 	fmt.Println(err)
 	fmt.Println(emp.Role)
 	switch {
@@ -158,10 +161,8 @@ func orderproduct(c *gin.Context) {
 		fmt.Println("total price", total_price)
 		total_tax := (quan * tax) //2*4=8
 		fmt.Println("total tax", total_tax)
-		// total := total_price + total_tax //40+8=48
 		total := total_price * (1 + ((tax) / 100))
 		fmt.Println("total", total)
-
 		Message := "You order successfully created"
 		c.IndentedJSON(http.StatusOK, gin.H{
 			"Name":         res.Name,

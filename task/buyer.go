@@ -43,7 +43,7 @@ func createbuyer(c *gin.Context) {
 
 		c.IndentedJSON(http.StatusOK, gin.H{
 			"data":    res,
-			"Message": "successfully registered buyer account",
+			"Message": "buyer account successfully registered ",
 		})
 	} else {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
