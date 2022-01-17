@@ -31,7 +31,7 @@ func getproductID(c *gin.Context) {
 			return
 		}
 	}
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Product not found"})
+	c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Product not found"})
 }
 
 //-------------------------------getAllproducts-------------------------------------------------------//
@@ -68,20 +68,19 @@ func createproduct(c *gin.Context) {
 	name := res.Name
 	price := res.Price
 	tax := res.Tax
-
+	fmt.Println(seller_id, name, price, tax)
 	fmt.Println("emp", res)
-
-	var pro Product
 	var sel Users
 	id := res.Seller_id
-	err = db.QueryRow("SELECT * FROM users,products WHERE seller_id='"+seller_id+"'AND users.id='"+id+"'").Scan(&sel.Id, &sel.Name, &sel.Email, &sel.Phoneno, &sel.Role, &pro.Id, &pro.Name, &pro.Price, &pro.Tax, &pro.Seller_id)
+	fmt.Println("id", id)
+	err = db.QueryRow("SELECT * FROM users WHERE  users.id='"+id+"'").Scan(&sel.Id, &sel.Name, &sel.Email, &sel.Phoneno, &sel.Role)
+	fmt.Println(err)
 	fmt.Println("role", sel.Role)
-	fmt.Println(sel.Id, pro.Seller_id)
+	fmt.Println(sel.Id)
 	switch {
 	case sel.Role == "2":
 		fmt.Println(sel.Role)
-		// res.Seller_id = sel.Id
-		seller_id := res.Seller_id
+		seller_id := id
 		fmt.Println("INSERT INTO products( name , price, tax,seller_id)VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "')")
 		rows, err := db.Query("INSERT INTO products( name , price, tax,seller_id)VALUES ('" + name + "', '" + price + "','" + tax + "','" + seller_id + "')RETURNING id,name,price,tax,seller_id")
 		if err != nil {
@@ -107,12 +106,12 @@ func createproduct(c *gin.Context) {
 		return
 
 	case err != nil:
-		c.IndentedJSON(http.StatusOK, gin.H{
+		c.IndentedJSON(http.StatusBadRequest, gin.H{
 			"Message": "seller  id not regestered",
 		})
 		return
 	default:
-		c.IndentedJSON(http.StatusOK, "empty")
+		c.IndentedJSON(http.StatusOK, "seller  id not regestered")
 	}
 }
 
@@ -156,8 +155,10 @@ func orderproduct(c *gin.Context) {
 		fmt.Println("total price", total_price)
 		total_tax := (quan * tax) //2*4=8
 		fmt.Println("total tax", total_tax)
-		total := total_price + total_tax //40+8=48
+		// total := total_price + total_tax //40+8=48
+		total := total_price * (1 + ((tax) / 100))
 		fmt.Println("total", total)
+
 		Message := "You order successfully created"
 		c.IndentedJSON(http.StatusOK, gin.H{
 			"Name":         res.Name,

@@ -42,11 +42,11 @@ func createbuyer(c *gin.Context) {
 		}
 
 		c.IndentedJSON(http.StatusOK, gin.H{
-			"Message": "successfully registered buyer account",
 			"data":    res,
+			"Message": "successfully registered buyer account",
 		})
 	} else {
-		c.IndentedJSON(http.StatusNotFound, gin.H{
+		c.IndentedJSON(http.StatusBadRequest, gin.H{
 
 			"Message": err.Error()})
 
@@ -172,6 +172,6 @@ func getbuyerId(c *gin.Context) {
 		}
 	}
 
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Buyerid is not found"})
+	c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Buyerid is not found"})
 
 }

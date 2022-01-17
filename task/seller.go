@@ -44,11 +44,11 @@ func createseller(c *gin.Context) {
 		fmt.Println("hhh", res)
 
 		c.IndentedJSON(http.StatusOK, gin.H{
-			"Message": "successfully registered seller account",
 			"data":    res,
+			"Message": "successfully registered seller account",
 		})
 	} else {
-		c.IndentedJSON(http.StatusNotFound, gin.H{
+		c.IndentedJSON(http.StatusBadRequest, gin.H{
 
 			"Message": err.Error()})
 
@@ -168,6 +168,6 @@ func getsellerId(c *gin.Context) {
 		}
 	}
 
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "sellerid not found"})
+	c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "sellerid not found"})
 
 }
